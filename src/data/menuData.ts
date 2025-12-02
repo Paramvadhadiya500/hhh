@@ -18,8 +18,8 @@ export const menuCategories: MenuCategory[] = [
     id: "garlic-bread",
     name: "Garlic Bread",
     items: [
-      { id: "gb1", name: "Classic Garlic Bread", description: "Freshly baked bread with garlic butter and herbs", price: 8, image: "https://images.unsplash.com/photo-1619535860434-ba1d8fa12536?w=400" },
-      { id: "gb2", name: "Cheesy Garlic Bread", description: "Loaded with mozzarella and parmesan cheese", price: 10, image: "https://images.unsplash.com/photo-1573140401552-3fab0b24306f?w=400" },
+      { id: "gb1", name: "Classic Garlic Bread", description: "Freshly baked bread with garlic butter and herbs", price: 8, image: "https://images.unsplash.com/photo-1619535860434-ba1d8fa12536?w=400", modelUrl: "/models/garlic-bread.glb" },
+      { id: "gb2", name: "Cheesy Garlic Bread", description: "Loaded with mozzarella and parmesan cheese", price: 10, image: "https://images.unsplash.com/photo-1573140401552-3fab0b24306f?w=400", modelUrl: "/models/garlic-bread.glb" },
     ]
   },
   {
