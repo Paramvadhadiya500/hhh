@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { X, View, Smartphone } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, View, Smartphone, Loader2 } from "lucide-react";
 import { MenuItem } from "@/data/menuData";
 import { Button } from "@/components/ui/button";
 
@@ -25,6 +25,9 @@ declare global {
           'shadow-intensity'?: string;
           'environment-image'?: string;
           exposure?: string;
+          loading?: string;
+          onLoad?: () => void;
+          onError?: () => void;
         },
         HTMLElement
       >;
@@ -34,6 +37,8 @@ declare global {
 
 export const ItemModal = ({ item, isOpen, onClose }: ItemModalProps) => {
   const modelViewerRef = useRef<HTMLElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -54,10 +59,18 @@ export const ItemModal = ({ item, isOpen, onClose }: ItemModalProps) => {
     return () => window.removeEventListener("keydown", handleEscape);
   }, [onClose]);
 
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoading(true);
+      setHasError(false);
+    }
+  }, [isOpen, item]);
+
   if (!isOpen || !item) return null;
 
-  // Sample GLB model URL - replace with actual models
+  // Fallback model if no custom model provided
   const sampleModelUrl = "https://modelviewer.dev/shared-assets/models/Astronaut.glb";
+  const modelSrc = item.modelUrl || sampleModelUrl;
 
   return (
     <div
@@ -79,9 +92,19 @@ export const ItemModal = ({ item, isOpen, onClose }: ItemModalProps) => {
         <div className="flex flex-col md:flex-row">
           {/* 3D Model Viewer */}
           <div className="w-full md:w-1/2 h-64 md:h-96 bg-secondary relative">
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-secondary z-10">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            )}
+            {hasError && (
+              <div className="absolute inset-0 flex items-center justify-center bg-secondary z-10">
+                <p className="text-muted-foreground text-sm">Failed to load 3D model</p>
+              </div>
+            )}
             <model-viewer
               ref={modelViewerRef}
-              src={item.modelUrl || sampleModelUrl}
+              src={modelSrc}
               alt={item.name}
               ar
               ar-modes="webxr scene-viewer quick-look"
@@ -89,7 +112,17 @@ export const ItemModal = ({ item, isOpen, onClose }: ItemModalProps) => {
               auto-rotate
               shadow-intensity="1"
               exposure="0.8"
+              loading="eager"
               style={{ width: "100%", height: "100%" }}
+              onLoad={() => {
+                console.log("Model loaded:", modelSrc);
+                setIsLoading(false);
+              }}
+              onError={() => {
+                console.error("Model failed to load:", modelSrc);
+                setIsLoading(false);
+                setHasError(true);
+              }}
             />
             <div className="absolute bottom-4 left-4 flex gap-2">
               <div className="flex items-center gap-1 bg-card/90 text-card-foreground px-3 py-1.5 rounded-full text-xs font-medium">

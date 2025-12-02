@@ -71,12 +71,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Load model-viewer script */}
-      <script
-        type="module"
-        src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
-      />
-
       <Header
         restaurantName={restaurantInfo.name}
         tagline={restaurantInfo.tagline}
