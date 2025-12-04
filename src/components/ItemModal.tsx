@@ -101,7 +101,7 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                 <div className="spinner" />
               </div>
             )}
-            <model-viewer
+            {/* <model-viewer
               ref={modelViewerRef}
               src={item.modelUrl || DEFAULT_MODEL_URL}
               alt={item.name}
@@ -114,7 +114,23 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
               loading="eager"
               reveal="auto"
               poster={item.image}
-            />
+            /> */
+            
+            <model-viewer
+  src={item.modelUrl}
+  alt={item.name}
+  ar
+  ar-modes="scene-viewer webxr"
+  loading="lazy"
+  reveal="interaction"
+  camera-controls
+  auto-rotate
+  shadow-intensity="0.5"
+  exposure="0.8"
+  poster={item.image}
+/>
+
+            }
             <div className="viewer-badge">
               <Eye size={14} />
               <span>3D View</span>
