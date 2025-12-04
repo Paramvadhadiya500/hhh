@@ -26,10 +26,8 @@ declare global {
         reveal?: string;
         poster?: string;
         'ar-scale'?: string;
-        'camera-orbit'?: string;
-        'min-camera-orbit'?: string;
-        'max-camera-orbit'?: string;
-        'interpolation-decay'?: string;
+        'touch-action'?: string;
+        'disable-zoom'?: boolean;
       }, HTMLElement>;
     }
   }
@@ -40,6 +38,7 @@ const DEFAULT_MODEL_URL = "https://modelviewer.dev/shared-assets/models/Astronau
 export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [arSupported, setArSupported] = useState(false);
+  const [arMode, setArMode] = useState<string>('');
   const modelViewerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -68,9 +67,23 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
 
     const handleLoad = () => {
       setIsLoading(false);
+      
       // Check AR support after model loads
       if (modelViewer.canActivateAR) {
         setArSupported(true);
+        
+        // Detect which AR mode will be used
+        const isWebXRSupported = 'xr' in navigator;
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        
+        if (isWebXRSupported && isAndroid) {
+          setArMode('WebXR (Fastest)');
+        } else if (isAndroid) {
+          setArMode('Scene Viewer');
+        } else if (isIOS) {
+          setArMode('Quick Look');
+        }
       }
     };
     
@@ -99,14 +112,29 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
     } else {
       const isAndroid = /Android/i.test(navigator.userAgent);
       const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const isHTTPS = window.location.protocol === 'https:';
       
-      let message = 'AR is not supported on this device.\n\n';
+      let message = 'AR is not available.\n\n';
+      
+      if (!isHTTPS) {
+        message += '⚠️ Your site must use HTTPS for WebXR AR to work!\n\n';
+      }
+      
       if (isAndroid) {
-        message += 'Make sure you have:\n• Android 7.0 or higher\n• ARCore installed\n• Chrome or supported browser';
+        message += 'Android Requirements:\n';
+        message += '• HTTPS website (required for WebXR)\n';
+        message += '• Chrome browser\n';
+        message += '• Android 7.0+\n';
+        message += '• Google Play Services for AR installed';
       } else if (isIOS) {
-        message += 'Make sure you have:\n• iOS 12 or higher\n• Safari browser\n• USDZ model file (coming soon)';
+        message += 'iOS Requirements:\n';
+        message += '• iOS 12 or higher\n';
+        message += '• Safari browser\n';
+        message += '• USDZ model file';
       } else {
-        message += 'AR works on:\n• Android 7.0+ devices\n• iOS 12+ devices';
+        message += 'AR works on:\n';
+        message += '• Android 7.0+ devices with Chrome\n';
+        message += '• iOS 12+ devices with Safari';
       }
       
       alert(message);
@@ -132,12 +160,13 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
               </div>
             )}
             
+            {/* OPTIMIZED FOR FASTEST AR - WebXR FIRST */}
             <model-viewer
               ref={modelViewerRef}
               src={item.modelUrl || DEFAULT_MODEL_URL}
               alt={item.name}
               ar
-              ar-modes="scene-viewer quick-look webxr"
+              ar-modes="webxr scene-viewer quick-look"
               camera-controls
               auto-rotate
               shadow-intensity="1"
@@ -147,33 +176,51 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
               reveal="auto"
               poster={item.image}
               ar-scale="auto"
-              camera-orbit="0deg 75deg 105%"
-              min-camera-orbit="auto auto 5%"
-              max-camera-orbit="auto auto 500%"
-              interpolation-decay="200"
+              touch-action="pan-y"
+              disable-zoom
             />
             
             <div className="viewer-badge">
               <Eye size={14} />
               <span>3D View</span>
             </div>
+            
+            {arSupported && arMode && (
+              <div className="ar-mode-badge">
+                <span>⚡ {arMode}</span>
+              </div>
+            )}
           </div>
           <div className="modal-details">
             <h2 className="modal-title">{item.name}</h2>
             <p className="modal-description">{item.description}</p>
             <p className="modal-price">${item.price}</p>
+            
+            {!arSupported && !isLoading && (
+              <div className="ar-warning">
+                {window.location.protocol !== 'https:' ? (
+                  <>⚠️ HTTPS required for AR</>
+                ) : (
+                  <>⚠️ AR not available</>
+                )}
+              </div>
+            )}
+            
             <button 
               className="btn btn-primary btn-full" 
               onClick={handleARClick}
               style={{ opacity: arSupported ? 1 : 0.6 }}
             >
               <Smartphone size={16} />
-              {arSupported ? 'View in AR' : 'AR Not Available'}
+              {arSupported ? 'Launch AR' : 'AR Not Available'}
             </button>
+            
             <p className="ar-hint">
               {arSupported 
-                ? "Point your camera at a flat surface to place the dish"
-                : "AR requires Android 7.0+ or iOS 12+"
+                ? "Tap to launch AR and place on any surface"
+                : window.location.protocol !== 'https:' 
+                  ? "Deploy to HTTPS to enable AR"
+                  : "AR requires compatible device"
               }
             </p>
           </div>
