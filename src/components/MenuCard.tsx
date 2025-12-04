@@ -1,4 +1,7 @@
+import { useCallback } from "react";
 import { MenuItem } from "@/data/menuData";
+
+const DEFAULT_MODEL_URL = "https://modelviewer.dev/shared-assets/models/Astronaut.glb";
 
 interface MenuCardProps {
   item: MenuItem;
@@ -6,8 +9,25 @@ interface MenuCardProps {
 }
 
 export function MenuCard({ item, onClick }: MenuCardProps) {
+  const preloadModel = useCallback(() => {
+    const modelUrl = item.modelUrl || DEFAULT_MODEL_URL;
+    // Preload the 3D model when hovering
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.href = modelUrl;
+    link.as = 'fetch';
+    if (!document.querySelector(`link[href="${modelUrl}"]`)) {
+      document.head.appendChild(link);
+    }
+  }, [item.modelUrl]);
+
   return (
-    <div className="menu-card" onClick={() => onClick(item)}>
+    <div 
+      className="menu-card" 
+      onClick={() => onClick(item)}
+      onMouseEnter={preloadModel}
+      onTouchStart={preloadModel}
+    >
       <div className="card-image">
         <img src={item.image} alt={item.name} loading="lazy" />
       </div>
