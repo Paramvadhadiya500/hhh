@@ -13,16 +13,23 @@ declare global {
     interface IntrinsicElements {
       'model-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
         src?: string;
+        'ios-src'?: string;
         alt?: string;
         ar?: boolean;
         'ar-modes'?: string;
         'camera-controls'?: boolean;
         'auto-rotate'?: boolean;
         'shadow-intensity'?: string;
+        'shadow-softness'?: string;
         exposure?: string;
         loading?: string;
         reveal?: string;
         poster?: string;
+        'ar-scale'?: string;
+        'camera-orbit'?: string;
+        'min-camera-orbit'?: string;
+        'max-camera-orbit'?: string;
+        'interpolation-decay'?: string;
       }, HTMLElement>;
     }
   }
@@ -32,6 +39,7 @@ const DEFAULT_MODEL_URL = "https://modelviewer.dev/shared-assets/models/Astronau
 
 export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const [isLoading, setIsLoading] = useState(true);
+  const [arSupported, setArSupported] = useState(false);
   const modelViewerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -55,11 +63,21 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   }, [onClose]);
 
   useEffect(() => {
-    const modelViewer = modelViewerRef.current;
+    const modelViewer = modelViewerRef.current as any;
     if (!modelViewer) return;
 
-    const handleLoad = () => setIsLoading(false);
-    const handleError = () => setIsLoading(false);
+    const handleLoad = () => {
+      setIsLoading(false);
+      // Check AR support after model loads
+      if (modelViewer.canActivateAR) {
+        setArSupported(true);
+      }
+    };
+    
+    const handleError = () => {
+      setIsLoading(false);
+      console.error('Model failed to load');
+    };
 
     modelViewer.addEventListener('load', handleLoad);
     modelViewer.addEventListener('error', handleError);
@@ -79,7 +97,19 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
     if (modelViewer?.canActivateAR) {
       modelViewer.activateAR();
     } else {
-      alert('AR is not supported on this device or browser.');
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      
+      let message = 'AR is not supported on this device.\n\n';
+      if (isAndroid) {
+        message += 'Make sure you have:\n• Android 7.0 or higher\n• ARCore installed\n• Chrome or supported browser';
+      } else if (isIOS) {
+        message += 'Make sure you have:\n• iOS 12 or higher\n• Safari browser\n• USDZ model file (coming soon)';
+      } else {
+        message += 'AR works on:\n• Android 7.0+ devices\n• iOS 12+ devices';
+      }
+      
+      alert(message);
     }
   };
 
@@ -101,38 +131,28 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
                 <div className="spinner" />
               </div>
             )}
-            {/* <model-viewer
+            
+            <model-viewer
               ref={modelViewerRef}
               src={item.modelUrl || DEFAULT_MODEL_URL}
               alt={item.name}
               ar
-              ar-modes="webxr scene-viewer quick-look"
+              ar-modes="scene-viewer quick-look webxr"
               camera-controls
               auto-rotate
               shadow-intensity="1"
+              shadow-softness="0.5"
               exposure="0.8"
               loading="eager"
               reveal="auto"
               poster={item.image}
-            /> */
+              ar-scale="auto"
+              camera-orbit="0deg 75deg 105%"
+              min-camera-orbit="auto auto 5%"
+              max-camera-orbit="auto auto 500%"
+              interpolation-decay="200"
+            />
             
-            <model-viewer
-  src={item.modelUrl}
- // ios-src={item.usdzUrl} 
-  alt={item.name}
-  ar
-  ar-modes="scene-viewer quick-look webxr"
-  loading="lazy"
-  reveal="interaction"
-  camera-controls
-  auto-rotate
-  shadow-intensity="1"
-  exposure="0.8"
-  poster={item.image}
-/>
-
-
-            }
             <div className="viewer-badge">
               <Eye size={14} />
               <span>3D View</span>
@@ -142,11 +162,20 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
             <h2 className="modal-title">{item.name}</h2>
             <p className="modal-description">{item.description}</p>
             <p className="modal-price">${item.price}</p>
-            <button className="btn btn-primary btn-full" onClick={handleARClick}>
+            <button 
+              className="btn btn-primary btn-full" 
+              onClick={handleARClick}
+              style={{ opacity: arSupported ? 1 : 0.6 }}
+            >
               <Smartphone size={16} />
-              View in AR
+              {arSupported ? 'View in AR' : 'AR Not Available'}
             </button>
-            <p className="ar-hint">Point your camera at a flat surface to place the dish</p>
+            <p className="ar-hint">
+              {arSupported 
+                ? "Point your camera at a flat surface to place the dish"
+                : "AR requires Android 7.0+ or iOS 12+"
+              }
+            </p>
           </div>
         </div>
       </div>
