@@ -20,6 +20,9 @@ declare global {
         'auto-rotate'?: boolean;
         'shadow-intensity'?: string;
         exposure?: string;
+        loading?: string;
+        reveal?: string;
+        poster?: string;
       }, HTMLElement>;
     }
   }
@@ -108,6 +111,9 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
               auto-rotate
               shadow-intensity="1"
               exposure="0.8"
+              loading="eager"
+              reveal="auto"
+              poster={item.image}
             />
             <div className="viewer-badge">
               <Eye size={14} />
