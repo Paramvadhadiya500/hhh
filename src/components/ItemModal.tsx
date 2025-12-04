@@ -118,17 +118,19 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
             
             <model-viewer
   src={item.modelUrl}
+ // ios-src={item.usdzUrl} 
   alt={item.name}
   ar
-  ar-modes="scene-viewer webxr"
+  ar-modes="scene-viewer quick-look webxr"
   loading="lazy"
   reveal="interaction"
   camera-controls
   auto-rotate
-  shadow-intensity="0.5"
+  shadow-intensity="1"
   exposure="0.8"
   poster={item.image}
 />
+
 
             }
             <div className="viewer-badge">
