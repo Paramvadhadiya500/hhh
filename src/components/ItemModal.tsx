@@ -37,6 +37,7 @@ const DEFAULT_MODEL_URL = "https://modelviewer.dev/shared-assets/models/Astronau
 
 export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   const [isLoading, setIsLoading] = useState(true);
+  const [loadProgress, setLoadProgress] = useState(0);
   const [arSupported, setArSupported] = useState(false);
   const [arMode, setArMode] = useState<string>('');
   const modelViewerRef = useRef<HTMLElement>(null);
@@ -44,6 +45,7 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true);
+      setLoadProgress(0);
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -65,8 +67,14 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
     const modelViewer = modelViewerRef.current as any;
     if (!modelViewer) return;
 
+    const handleProgress = (event: any) => {
+      const progress = event.detail.totalProgress * 100;
+      setLoadProgress(Math.round(progress));
+    };
+
     const handleLoad = () => {
       setIsLoading(false);
+      setLoadProgress(100);
       
       // Check AR support after model loads
       if (modelViewer.canActivateAR) {
@@ -92,10 +100,12 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
       console.error('Model failed to load');
     };
 
+    modelViewer.addEventListener('progress', handleProgress);
     modelViewer.addEventListener('load', handleLoad);
     modelViewer.addEventListener('error', handleError);
 
     return () => {
+      modelViewer.removeEventListener('progress', handleProgress);
       modelViewer.removeEventListener('load', handleLoad);
       modelViewer.removeEventListener('error', handleError);
     };
@@ -157,10 +167,33 @@ export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
             {isLoading && (
               <div className="loader">
                 <div className="spinner" />
+                <div style={{ 
+                  marginTop: '12px', 
+                  fontSize: '14px', 
+                  color: '#666',
+                  fontWeight: '500'
+                }}>
+                  Loading 3D Model... {loadProgress}%
+                </div>
+                <div style={{
+                  width: '200px',
+                  height: '4px',
+                  background: '#e0e0e0',
+                  borderRadius: '2px',
+                  overflow: 'hidden',
+                  marginTop: '8px'
+                }}>
+                  <div style={{
+                    width: `${loadProgress}%`,
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #4CAF50, #8BC34A)',
+                    transition: 'width 0.3s ease'
+                  }} />
+                </div>
               </div>
             )}
             
-            {/* OPTIMIZED FOR FASTEST AR - WebXR FIRST */}
+            {/* OPTIMIZED - Uses CDN URLs automatically */}
             <model-viewer
               ref={modelViewerRef}
               src={item.modelUrl || DEFAULT_MODEL_URL}
