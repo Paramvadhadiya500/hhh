@@ -33,14 +33,6 @@ declare global {
   }
 }
 
-
-
-
-
-
-
-
-
 const DEFAULT_MODEL_URL = "https://modelviewer.dev/shared-assets/models/Astronaut.glb";
 
 export function ItemModal({ item, isOpen, onClose }: ItemModalProps) {
